@@ -68,7 +68,7 @@ PaymentDetailsDictionary.Add("PaymentMethod", PaymentMethodDictionary);
 # Order Details
 OrderDetailsDictionary.Add("Country", "us");
 OrderDetailsDictionary.Add("Currency", "USD");
-OrderDetailsDictionary.Add("CustomerIP", "127.0.0.1"");
+OrderDetailsDictionary.Add("CustomerIP", "127.0.0.1");
 OrderDetailsDictionary.Add("ExternalReference", "CustOrd100");
 OrderDetailsDictionary.Add("Language", "en");
 OrderDetailsDictionary.Add("Source", "tcolib.local");
