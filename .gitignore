@@ -1,0 +1,10 @@
+*~
+*.vs
+*.lock
+*.DS_Store
+*.swp
+*.out
+*.classpath
+*.project
+*bin
+*obj
