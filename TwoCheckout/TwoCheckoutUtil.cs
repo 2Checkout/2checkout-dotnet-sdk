@@ -25,10 +25,10 @@ namespace TwoCheckout
             var StringHash = TwoCheckoutConfig.SellerId.Length + TwoCheckoutConfig.SellerId + GmtDate.ToString().Length + GmtDate.ToString();
             var Data = Encoding.UTF8.GetBytes(StringHash);
             var Key = Encoding.UTF8.GetBytes(TwoCheckoutConfig.SecretKey);
-            var Hmac = new HMACMD5(Key);
+            var Hmac = new HMACSHA256(Key);
             var HashBytes = Hmac.ComputeHash(Data);
             var Hash = System.BitConverter.ToString(HashBytes).Replace("-", "").ToLower();
-            string AvangateCode = "code=\"" + TwoCheckoutConfig.SellerId + "\" date=\"" + GmtDate + "\" hash=\"" + Hash + "\"";
+            string AvangateCode = "code=\"" + TwoCheckoutConfig.SellerId + "\" date=\"" + GmtDate + "\" hash=\"" + Hash + "\"" + "algo=\"sha256\"";
             string[] Headers = { "application/json", "application/json", AvangateCode };
             return Headers;
         }
