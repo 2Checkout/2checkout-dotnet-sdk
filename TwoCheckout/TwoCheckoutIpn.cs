@@ -7,6 +7,9 @@ namespace TwoCheckout
 {
     public class TwoCheckoutIpn
     {
+        public const string algoMd5 = "MD5";
+        public const string algoSha256 = "SHA256";
+
         public TwoCheckoutIpn()
         {
 
@@ -14,52 +17,72 @@ namespace TwoCheckout
 
         public string CalculateIpnResponse(string SecretKey, string Now, Dictionary<string, dynamic> IpnResponse)
         {
-            string ResultResponse = "";
-            IpnResponse.Add("DATE", Now);
-            foreach (var item in IpnResponse.Values)
+            string response = "";
+
+            string algorithm = GetHashAlgorithm(IpnResponse);
+            if (algorithm != null)
             {
-                if (item.GetType().IsArray)
+                string ResultResponse = "";
+                ResultResponse += ArrayExpand(IpnResponse["IPN_PID"]);
+                ResultResponse += ArrayExpand(IpnResponse["IPN_PNAME"]);
+                ResultResponse += IpnResponse["IPN_DATE"].Length.ToString() + IpnResponse["IPN_DATE"];
+                ResultResponse += Now.Length.ToString() + Now;
+
+                if (algorithm.Equals(algoSha256))
                 {
-                    ResultResponse += ArrayExpand(item);
+                    response = "<sig algo=\"sha256\" date=\"" + Now + "\">" + HmacSha256(ResultResponse, SecretKey) + "</sig>";
                 }
                 else
                 {
-                    ResultResponse += StripSlashes(item).Length + StripSlashes(item);
+                    response = "<EPAYMENT>" + Now + "|" + HmacMd5(ResultResponse, SecretKey) + "</EPAYMENT>";
                 }
-                    
             }
-            return "<EPAYMENT>" + IpnResponse["DATE"] + "|" + HmacMd5(ResultResponse, SecretKey) + "</EPAYMENT>";
+
+            return response;
         }
 
         public bool IsIpnResponseValid(string SecretKey, Dictionary<string, dynamic> IpnParams)
         {
             string Result = "";
-            string ReceivedHash = IpnParams["HASH"];
+            string algorithm = GetHashAlgorithm(IpnParams);
 
-            foreach (var item in IpnParams)
+            if (algorithm != null)
             {
-                if(item.Key != "HASH")
+                string ReceivedHash = algorithm.Equals(algoSha256) ? IpnParams["SIGNATURE_SHA2_256"] : IpnParams["HASH"];
+
+                string[] array = { "HASH", "SIGNATURE_SHA3_256", "SIGNATURE_SHA2_256" };
+
+                foreach (var item in IpnParams)
                 {
-                    if (item.Value.GetType().IsArray)
+                    if(!Array.Exists(array, element => element == item.Key))
                     {
-                        Result += ArrayExpand(item.Value);
-                    }
-                    else
-                    {
-                        Result += StripSlashes(item.Value).Length + StripSlashes(item.Value);
+                        if (item.Value.GetType().IsArray)
+                        {
+                            Result += ArrayExpand(item.Value);
+                        }
+                        else
+                        {
+                            Result += StripSlashes(item.Value).Length + StripSlashes(item.Value);
+                        }
                     }
                 }
-            }
 
-            if (IpnParams["REFNO"] != null)
-            {
-                string CalcHash = HmacMd5(Result, SecretKey);
+                string CalcHash = null;
+                if (algorithm.Equals(algoSha256))
+                {
+                    CalcHash = HmacSha256(Result, SecretKey);
+                }
+                else
+                {
+                    CalcHash = HmacMd5(Result, SecretKey);
+                }
+
                 if (ReceivedHash == CalcHash )
 			    {
                     return true;
                 }
 
-             }
+            }
             return false;
         }
         public string ArrayExpand(dynamic itemArray)
@@ -96,6 +119,30 @@ namespace TwoCheckout
             var hmac = new HMACMD5(key);
             var hashBytes = hmac.ComputeHash(data);
             return System.BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        }
+
+        public dynamic HmacSha256(string ResultResponse, string SecretKey)
+        {
+            var data = Encoding.UTF8.GetBytes(ResultResponse);
+            var key = Encoding.UTF8.GetBytes(SecretKey);
+            var hmac = new HMACSHA256(key);
+            var hashBytes = hmac.ComputeHash(data);
+            return System.BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        }
+
+        public String GetHashAlgorithm(Dictionary<string, dynamic> IpnParams)
+        {
+            String receivedAlgo = null;
+
+            if (IpnParams.ContainsKey("SIGNATURE_SHA2_256"))
+            {
+                receivedAlgo = algoSha256;
+            } else if (IpnParams.ContainsKey("HASH"))
+            {
+                receivedAlgo = algoMd5;
+            }
+
+            return receivedAlgo;
         }
     }
 }
