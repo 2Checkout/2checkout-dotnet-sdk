@@ -25,8 +25,8 @@ namespace TwoCheckout
                 string ResultResponse = "";
                 ResultResponse += ArrayExpand(IpnResponse["IPN_PID"]);
                 ResultResponse += ArrayExpand(IpnResponse["IPN_PNAME"]);
-                ResultResponse += IpnResponse["IPN_DATE"].Length + IpnResponse["IPN_DATE"];
-                ResultResponse += Now.Length + Now;
+                ResultResponse += IpnResponse["IPN_DATE"].Length.ToString() + IpnResponse["IPN_DATE"];
+                ResultResponse += Now.Length.ToString() + Now;
 
                 if (algorithm.Equals(algoSha256))
                 {
