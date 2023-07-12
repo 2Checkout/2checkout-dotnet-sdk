@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace TwoCheckout
 {
@@ -21,7 +22,9 @@ namespace TwoCheckout
             int iat = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds - 10;
             int exp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds + TokenExpiration;
             string JwtToken = GetJwtToken(TwoCheckoutConfig.SellerId, TwoCheckoutConfig.SecretWord, iat.ToString(), exp.ToString());
-            return Tco.Call("https://secure.2checkout.com/checkout/api/encrypt/generate/signature", TwoCheckoutConfig, "POST", CplusParams, JwtToken.Trim());
+            string result = Tco.Call("https://secure.2checkout.com/checkout/api/encrypt/generate/signature", TwoCheckoutConfig, "POST", CplusParams, JwtToken.Trim());
+            var resultDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            return resultDictionary["signature"];
         }
 
         public string GetJwtToken(string SellerId, string BuyLinkSecretWord, string iat, string exp)
